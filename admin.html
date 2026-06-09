@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard — Dental AI</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; background: #f0f4f8; min-height: 100vh; }
+
+        #login-screen {
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; min-height: 100vh; gap: 16px;
+        }
+        #login-screen h1 { color: #1a73e8; font-size: 1.5rem; }
+        #login-box {
+            background: #fff; padding: 32px; border-radius: 14px;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.1);
+            display: flex; flex-direction: column; gap: 14px; width: 320px;
+        }
+        #login-box input {
+            padding: 12px 14px; border: 2px solid #ddd;
+            border-radius: 8px; font-size: 1rem; outline: none;
+        }
+        #login-box input:focus { border-color: #1a73e8; }
+        #login-error { color: #d93025; font-size: 0.9rem; display: none; }
+
+        #dashboard { display: none; }
+
+        header {
+            background: #1a73e8; color: #fff; padding: 16px 32px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        header h1 { font-size: 1.3rem; }
+        .logout-btn {
+            background: rgba(255,255,255,0.2); border: none; color: #fff;
+            padding: 8px 18px; border-radius: 20px; cursor: pointer; font-size: 0.9rem;
+        }
+        .logout-btn:hover { background: rgba(255,255,255,0.35); }
+
+        .container { max-width: 960px; margin: 32px auto; padding: 0 20px; display: flex; flex-direction: column; gap: 28px; }
+
+        .card { background: #fff; border-radius: 14px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); padding: 28px; }
+        .card h2 { font-size: 1.1rem; color: #1a73e8; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #e8f0fe; }
+
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .form-grid .full { grid-column: 1 / -1; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 0.85rem; font-weight: 600; color: #555; }
+        .form-group input, .form-group textarea {
+            padding: 10px 14px; border: 2px solid #ddd; border-radius: 8px;
+            font-size: 0.95rem; outline: none; font-family: inherit; resize: vertical;
+        }
+        .form-group input:focus, .form-group textarea:focus { border-color: #1a73e8; }
+
+        .save-btn {
+            margin-top: 6px; padding: 12px 28px; background: #1a73e8; color: #fff;
+            border: none; border-radius: 24px; font-size: 1rem; cursor: pointer;
+        }
+        .save-btn:hover { background: #0d47a1; }
+        .save-btn:disabled { background: #aaa; cursor: not-allowed; }
+        #form-msg { margin-top: 10px; font-size: 0.9rem; min-height: 20px; }
+        .success-msg { color: #1e8e3e; }
+        .error-msg   { color: #d93025; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+        thead tr { background: #e8f0fe; }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #f0f0f0; }
+        th { font-weight: 700; color: #1a73e8; }
+        tr:hover td { background: #fafafa; }
+
+        .id-badge {
+            background: #e8f0fe; color: #1a73e8; padding: 2px 8px;
+            border-radius: 6px; font-size: 0.78rem; font-family: monospace;
+        }
+
+        .link-cell {
+            display: flex; align-items: center; gap: 6px; max-width: 280px;
+        }
+        .link-text {
+            font-size: 0.8rem; color: #555; white-space: nowrap;
+            overflow: hidden; text-overflow: ellipsis; max-width: 180px;
+        }
+        .copy-btn {
+            background: #e8f0fe; color: #1a73e8; border: none;
+            padding: 4px 10px; border-radius: 8px; cursor: pointer;
+            font-size: 0.8rem; white-space: nowrap; flex-shrink: 0;
+        }
+        .copy-btn:hover { background: #d2e3fc; }
+        .copy-btn.copied { background: #e6f4ea; color: #1e8e3e; }
+
+        .del-btn {
+            background: #fce8e6; color: #d93025; border: none;
+            padding: 5px 12px; border-radius: 8px; cursor: pointer; font-size: 0.85rem;
+        }
+        .del-btn:hover { background: #f5c6c3; }
+
+        .empty-state { text-align: center; color: #aaa; padding: 30px 0; font-style: italic; }
+        button.primary {
+            padding: 10px 22px; background: #1a73e8; color: #fff;
+            border: none; border-radius: 20px; cursor: pointer; font-size: 0.95rem;
+        }
+        button.primary:hover { background: #0d47a1; }
+    </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+    <h1>&#128274; Admin Login</h1>
+    <div id="login-box">
+        <input type="password" id="pwd-input" placeholder="Enter admin password" />
+        <span id="login-error">Incorrect password. Please try again.</span>
+        <button class="primary" onclick="login()">Login</button>
+    </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+    <header>
+        <h1>&#9881;&#65039; Dental AI — Admin Dashboard</h1>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+    </header>
+
+    <div class="container">
+
+        <!-- ADD CLIENT -->
+        <div class="card">
+            <h2>&#43; Add New Clinic</h2>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Clinic Name *</label>
+                    <input type="text" id="f-name" placeholder="e.g. Smile Dental Clinic" />
+                </div>
+                <div class="form-group">
+                    <label>Website URL *</label>
+                    <input type="text" id="f-website" placeholder="https://www.theirclinic.co.uk/" />
+                </div>
+                <div class="form-group">
+                    <label>Admin Email *</label>
+                    <input type="email" id="f-email" placeholder="admin@theirclinic.co.uk" />
+                </div>
+                <div class="form-group">
+                    <label>Calendly Booking Link</label>
+                    <input type="text" id="f-calendly" placeholder="https://calendly.com/theirclinic" />
+                </div>
+                <div class="form-group full">
+                    <label>Description</label>
+                    <textarea id="f-desc" rows="2" placeholder="Short description of the clinic..."></textarea>
+                </div>
+            </div>
+            <button class="save-btn" id="save-btn" onclick="addClient()">Save Clinic</button>
+            <div id="form-msg"></div>
+        </div>
+
+        <!-- CLIENTS TABLE -->
+        <div class="card">
+            <h2>&#127968; Registered Clinics</h2>
+            <div id="clients-container"><div class="empty-state">Loading...</div></div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    let adminPassword = '';
+
+    document.getElementById('pwd-input').addEventListener('keydown', e => {
+        if (e.key === 'Enter') login();
+    });
+
+    function login() {
+        adminPassword = document.getElementById('pwd-input').value.trim();
+        if (!adminPassword) return;
+        fetchClients(true);
+    }
+
+    function logout() {
+        adminPassword = '';
+        document.getElementById('dashboard').style.display = 'none';
+        document.getElementById('login-screen').style.display = 'flex';
+        document.getElementById('pwd-input').value = '';
+        document.getElementById('login-error').style.display = 'none';
+    }
+
+    async function fetchClients(isLogin = false) {
+        try {
+            const res = await fetch(`/admin/clients?password=${encodeURIComponent(adminPassword)}`);
+            if (res.status === 401) {
+                if (isLogin) {
+                    document.getElementById('login-error').style.display = 'block';
+                    adminPassword = '';
+                }
+                return;
+            }
+            const clients = await res.json();
+            if (isLogin) {
+                document.getElementById('login-error').style.display = 'none';
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+            }
+            renderClients(clients);
+        } catch (e) { console.error(e); }
+    }
+
+    function renderClients(clients) {
+        const container = document.getElementById('clients-container');
+        const entries = Object.entries(clients);
+        if (!entries.length) {
+            container.innerHTML = '<div class="empty-state">No clinics added yet.</div>';
+            return;
+        }
+
+        const origin = window.location.origin;
+        let html = `<table><thead><tr>
+            <th>ID</th><th>Name</th><th>Email</th><th>Chat Link</th><th>Action</th>
+        </tr></thead><tbody>`;
+
+        for (const [id, cfg] of entries) {
+            const chatUrl = `${origin}/${id}/chat`;
+            html += `<tr>
+                <td><span class="id-badge">${id}</span></td>
+                <td>${cfg.name}</td>
+                <td>${cfg.email}</td>
+                <td>
+                    <div class="link-cell">
+                        <span class="link-text" title="${chatUrl}">/${id}/chat</span>
+                        <button class="copy-btn" id="copy-${id}" onclick="copyLink('${chatUrl}','${id}')">
+                            &#128203; Copy Link
+                        </button>
+                    </div>
+                </td>
+                <td><button class="del-btn" onclick="deleteClient('${id}')">Delete</button></td>
+            </tr>`;
+        }
+
+        html += '</tbody></table>';
+        container.innerHTML = html;
+    }
+
+    function copyLink(url, id) {
+        navigator.clipboard.writeText(url).then(() => {
+            const btn = document.getElementById(`copy-${id}`);
+            btn.textContent = '✓ Copied!';
+            btn.classList.add('copied');
+            setTimeout(() => {
+                btn.innerHTML = '&#128203; Copy Link';
+                btn.classList.remove('copied');
+            }, 2000);
+        });
+    }
+
+    async function addClient() {
+        const name        = document.getElementById('f-name').value.trim();
+        const website     = document.getElementById('f-website').value.trim();
+        const email       = document.getElementById('f-email').value.trim();
+        const calendly    = document.getElementById('f-calendly').value.trim();
+        const description = document.getElementById('f-desc').value.trim();
+        const msgEl       = document.getElementById('form-msg');
+        const btn         = document.getElementById('save-btn');
+
+        if (!name || !website || !email) {
+            msgEl.innerHTML = '<span class="error-msg">Please fill in Name, Website, and Email.</span>';
+            return;
+        }
+
+        btn.disabled = true;
+        msgEl.innerHTML = 'Saving...';
+
+        try {
+            const res = await fetch('/admin/clients', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: adminPassword, name, website, email, calendly, description })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                msgEl.innerHTML = `<span class="success-msg">✓ "<strong>${name}</strong>" added — ID: <code>${data.client_id}</code></span>`;
+                ['f-name','f-website','f-email','f-calendly','f-desc'].forEach(id => document.getElementById(id).value = '');
+                fetchClients();
+            } else {
+                msgEl.innerHTML = `<span class="error-msg">${data.detail || 'Failed to save.'}</span>`;
+            }
+        } catch (e) {
+            msgEl.innerHTML = '<span class="error-msg">Network error. Please try again.</span>';
+        }
+        btn.disabled = false;
+    }
+
+    async function deleteClient(clientId) {
+        if (!confirm(`Delete clinic "${clientId}"? This cannot be undone.`)) return;
+        const res = await fetch(`/admin/clients/${clientId}?password=${encodeURIComponent(adminPassword)}`, { method: 'DELETE' });
+        if (res.ok) fetchClients();
+        else alert('Failed to delete. Please try again.');
+    }
+</script>
+</body>
+</html>
