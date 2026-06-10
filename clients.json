@@ -1,0 +1,21 @@
+{
+  "khan_clinic": {
+    "name": "Khan clinic",
+    "website": "https://khansdentalclinic.com/",
+    "email": "m.ghulam.akbar0125@gmail.com",
+    "calendly": "",
+    "description": "",
+    "extra_info": "",
+    "special_instructions": "",
+    "color": "#000000",
+    "bot_name": "AI Dental Assistant",
+    "bot_avatar": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTms-twB6OzX_nn39tJN0lxJy5qQki2Ch3TRg&s",
+    "bg_color": "#f0f4f8",
+    "bg_image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT1eJp96RJ1MmHEr1QeJEf7RpDXWD7pw2-kBhL2Gi12GQ&s=10",
+    "google_sheet_id": "",
+    "phone": "",
+    "office_open": "09:00",
+    "office_close": "17:00",
+    "office_days": "1,2,3,4,5"
+  }
+}

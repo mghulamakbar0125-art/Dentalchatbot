@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{CLIENT_NAME}} — Chat</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: {{BG_COLOR}};
+            {{BG_IMAGE_CSS}}
+            display: flex; flex-direction: column; align-items: center;
+            min-height: 100vh; padding: 20px;
+        }
+
+        .header {
+            width: 100%; max-width: 700px;
+            margin-bottom: 16px;
+            display: flex; flex-direction: column; align-items: center; gap: 8px;
+        }
+        .header-inner { display: flex; align-items: center; gap: 14px; }
+
+        .bot-avatar-img {
+            width: 52px; height: 52px; border-radius: 50%; object-fit: cover;
+            border: 3px solid {{PRIMARY_COLOR}};
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        .bot-avatar-placeholder {
+            width: 52px; height: 52px; border-radius: 50%;
+            background: {{PRIMARY_COLOR}};
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        .bot-avatar-placeholder svg { width: 28px; height: 28px; fill: #fff; }
+
+        h1 { color: {{PRIMARY_COLOR}}; font-size: 1.4rem; }
+        .subtitle { font-size: 0.85rem; color: #888; margin-top: 2px; }
+
+        .status-badge {
+            display: flex; align-items: center; gap: 5px;
+            font-size: 0.78rem; margin-top: 4px;
+        }
+        .status-dot {
+            width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+            transition: background 0.3s;
+        }
+        .status-dot.online  { background: #22c55e; box-shadow: 0 0 0 3px rgba(34,197,94,0.2); }
+        .status-dot.offline { background: #888; }
+        #status-text.online  { color: #16a34a; font-weight: 600; }
+        #status-text.offline { color: #888; }
+
+        #chat-box {
+            background: rgba(255,255,255,0.97); border-radius: 14px;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.12);
+            width: 100%; max-width: 700px; height: 520px;
+            overflow-y: auto; padding: 20px;
+            display: flex; flex-direction: column; gap: 4px;
+        }
+        #chat-box::-webkit-scrollbar { width: 5px; }
+        #chat-box::-webkit-scrollbar-thumb { background: #ddd; border-radius: 4px; }
+
+        .msg-row { display: flex; flex-direction: column; margin-bottom: 8px; }
+        .msg-row.user-row { align-items: flex-end; }
+        .msg-row.bot-row  { align-items: flex-start; }
+
+        .message {
+            max-width: 80%; padding: 10px 14px; border-radius: 18px;
+            line-height: 1.6; word-wrap: break-word;
+        }
+        .user-msg { background: {{PRIMARY_COLOR}}; color: #fff; border-bottom-right-radius: 4px; }
+        .bot-msg  { background: #e8f0fe; color: #202124; border-bottom-left-radius: 4px; }
+        .bot-msg strong { font-weight: 700; }
+        .bot-msg a { color: {{PRIMARY_COLOR}}; text-decoration: underline; }
+        .loading  { background: #e8f0fe; color: #888; border-bottom-left-radius: 4px; font-style: italic; }
+
+        .msg-time { font-size: 0.7rem; color: #aaa; margin-top: 3px; padding: 0 4px; }
+
+        .handoff-notice {
+            background: #fff3cd; border: 1px solid #ffc107; color: #856404;
+            border-radius: 10px; padding: 10px 14px; font-size: 0.9rem;
+            align-self: stretch; text-align: center; margin: 4px 0 8px;
+        }
+
+        .quick-replies {
+            display: flex; flex-wrap: wrap; gap: 8px;
+            margin: 4px 0 10px; padding: 0 2px;
+        }
+        .qr-btn {
+            background: #fff; color: {{PRIMARY_COLOR}};
+            border: 1.5px solid {{PRIMARY_COLOR}};
+            border-radius: 20px; padding: 7px 15px;
+            font-size: 0.83rem; cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+            white-space: nowrap; font-family: Arial, sans-serif;
+        }
+        .qr-btn:hover { background: {{PRIMARY_COLOR}}; color: #fff; }
+
+        #input-area {
+            display: flex; gap: 10px;
+            width: 100%; max-width: 700px; margin-top: 12px; align-items: center;
+        }
+        #question {
+            flex: 1; padding: 12px 16px;
+            border: 2px solid {{PRIMARY_COLOR}};
+            border-radius: 24px; font-size: 1rem; outline: none;
+            background: rgba(255,255,255,0.97);
+        }
+        #question:focus { box-shadow: 0 0 0 3px rgba(26,115,232,0.15); }
+
+        #ask-btn {
+            padding: 12px 24px; background: {{PRIMARY_COLOR}};
+            color: #fff; border: none; border-radius: 24px;
+            font-size: 1rem; cursor: pointer; transition: filter 0.2s;
+        }
+        #ask-btn:hover { filter: brightness(0.88); }
+        #ask-btn:disabled { background: #aaa; cursor: not-allowed; filter: none; }
+
+        #call-btn-wrap {
+            width: 100%; max-width: 700px;
+            display: flex; justify-content: center; margin-top: 10px;
+        }
+        #call-btn {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 12px 0; background: #22c55e;
+            color: #fff; border: none; border-radius: 28px;
+            font-size: 0.95rem; font-weight: 700; cursor: pointer; text-decoration: none;
+            white-space: nowrap; transition: filter 0.2s; font-family: Arial, sans-serif;
+            width: 100%; max-width: 340px;
+        }
+        #call-btn:hover { filter: brightness(0.9); }
+        #call-btn svg { width: 18px; height: 18px; fill: #fff; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-inner">
+            {{BOT_AVATAR_HTML}}
+            <div>
+                <h1>{{CLIENT_NAME}}</h1>
+                <div class="subtitle">{{BOT_NAME}}</div>
+                <div class="status-badge">
+                    <span class="status-dot" id="status-dot"></span>
+                    <span id="status-text"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="chat-box"></div>
+
+    <div id="input-area">
+        <input type="text" id="question" placeholder="Type your message..." />
+        <button id="ask-btn" onclick="askBot()">Send</button>
+    </div>
+    <div id="call-btn-wrap">{{CALL_BTN_HTML}}</div>
+
+    <script>
+        const CLIENT_ID    = "{{CLIENT_ID}}";
+        const CLIENT_NAME  = "{{CLIENT_NAME}}";
+        const BOT_NAME     = "{{BOT_NAME}}";
+        const OFFICE_OPEN  = "{{OFFICE_OPEN}}";
+        const OFFICE_CLOSE = "{{OFFICE_CLOSE}}";
+        const OFFICE_DAYS  = [{{OFFICE_DAYS_JS}}];
+        const sessionId    = Math.random().toString(36).substring(2);
+
+        const chatBox = document.getElementById('chat-box');
+        const input   = document.getElementById('question');
+        const btn     = document.getElementById('ask-btn');
+
+        // ── Office status ─────────────────────────────────────────────────────
+        function isOfficeOpen() {
+            const now  = new Date();
+            const day  = now.getDay();
+            const mins = now.getHours() * 60 + now.getMinutes();
+            const [oh, om] = OFFICE_OPEN.split(':').map(Number);
+            const [ch, cm] = OFFICE_CLOSE.split(':').map(Number);
+            return OFFICE_DAYS.includes(day) && mins >= oh * 60 + om && mins < ch * 60 + cm;
+        }
+        (function updateStatus() {
+            const online = isOfficeOpen();
+            const dot  = document.getElementById('status-dot');
+            const text = document.getElementById('status-text');
+            dot.className  = 'status-dot ' + (online ? 'online' : 'offline');
+            text.className = online ? 'online' : 'offline';
+            text.textContent = online
+                ? '🟢 Available — typically replies instantly'
+                : '⚫ Out of Office — we\'ll get back to you soon';
+        })();
+
+        // ── Helpers ───────────────────────────────────────────────────────────
+        function getTime() {
+            return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+        function parseMarkdown(text) {
+            return text
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank">$1</a>')
+                .replace(/\n/g, '<br>');
+        }
+
+        function addMessage(text, type) {
+            const row = document.createElement('div');
+            row.className = 'msg-row ' + (type === 'user-msg' ? 'user-row' : 'bot-row');
+            const div = document.createElement('div');
+            div.className = 'message ' + type;
+            if (type === 'user-msg') {
+                div.innerText = text;
+            } else {
+                div.innerHTML = parseMarkdown(text);
+            }
+            const ts = document.createElement('div');
+            ts.className = 'msg-time';
+            ts.textContent = getTime();
+            row.appendChild(div);
+            row.appendChild(ts);
+            chatBox.appendChild(row);
+            chatBox.scrollTop = chatBox.scrollHeight;
+            return { row, div };
+        }
+
+        function addHandoffNotice() {
+            const div = document.createElement('div');
+            div.className = 'handoff-notice';
+            div.innerHTML = '&#128222; Our team has been notified and will contact you shortly.';
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        // ── Quick replies ─────────────────────────────────────────────────────
+        function showQuickReplies() {
+            const wr = document.createElement('div');
+            wr.className = 'quick-replies';
+            wr.id = 'quick-replies';
+            [
+                '📅 Book Appointment',
+                '⏰ Office Hours',
+                '📞 Contact Info',
+                '🦷 Our Services',
+                '💰 Pricing'
+            ].forEach(label => {
+                const b = document.createElement('button');
+                b.className = 'qr-btn';
+                b.textContent = label;
+                b.onclick = () => {
+                    const qr = document.getElementById('quick-replies');
+                    if (qr) qr.remove();
+                    input.value = label;
+                    askBot();
+                };
+                wr.appendChild(b);
+            });
+            chatBox.appendChild(wr);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        // ── Send message ──────────────────────────────────────────────────────
+        async function askBot() {
+            const q = input.value.trim();
+            if (!q) return;
+
+            const qr = document.getElementById('quick-replies');
+            if (qr) qr.remove();
+
+            addMessage(q, 'user-msg');
+            input.value = '';
+            btn.disabled = true;
+
+            const { row: loadRow } = addMessage('Typing...', 'loading');
+
+            try {
+                const url  = `/ask/${CLIENT_ID}?question=${encodeURIComponent(q)}&session_id=${sessionId}`;
+                const res  = await fetch(url);
+                const data = await res.json();
+                loadRow.remove();
+                addMessage(data.answer || 'No response received.', 'bot-msg');
+                if (data.handoff) addHandoffNotice();
+            } catch {
+                loadRow.remove();
+                addMessage('Connection error. Please try again.', 'bot-msg');
+            }
+
+            btn.disabled = false;
+            input.focus();
+        }
+
+        input.addEventListener('keydown', e => { if (e.key === 'Enter') askBot(); });
+
+        // ── Welcome ───────────────────────────────────────────────────────────
+        addMessage('Hi there! 👋 Welcome to **' + CLIENT_NAME + '**. How can I help you today?', 'bot-msg');
+        showQuickReplies();
+    </script>
+</body>
+</html>

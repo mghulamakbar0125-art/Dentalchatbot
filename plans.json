@@ -1,0 +1,54 @@
+[
+  {
+    "name": "Starter",
+    "price": "5",
+    "currency": "$",
+    "period": "month",
+    "badge": "",
+    "featured": false,
+    "tagline": "Perfect for a single clinic getting started",
+    "features": [
+      "1 clinic widget",
+      "Lead capture & storage",
+      "Email notifications",
+      "Office hours status",
+      "Branded widget"
+    ],
+    "cta": "Get Started"
+  },
+  {
+    "name": "Growth",
+    "price": "10",
+    "currency": "$",
+    "period": "month",
+    "badge": "Most Popular",
+    "featured": true,
+    "tagline": "Everything you need to grow your practice",
+    "features": [
+      "Up to 3 clinic widgets",
+      "Appointment booking",
+      "Google Sheets sync",
+      "Email + booking notifications",
+      "Custom bot name & avatar",
+      "Priority support"
+    ],
+    "cta": "Get Started"
+  },
+  {
+    "name": "Agency",
+    "price": "20",
+    "currency": "$",
+    "period": "month",
+    "badge": "",
+    "featured": false,
+    "tagline": "For agencies managing multiple clinics",
+    "features": [
+      "Unlimited clinic widgets",
+      "Everything in Growth",
+      "White-label option",
+      "Dedicated account manager",
+      "Custom integrations"
+    ],
+    "cta": "Contact Us"
+  }
+]

@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard — Dental AI</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; background: #f0f4f8; min-height: 100vh; }
+
+        /* ── Login ── */
+        #login-screen {
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; min-height: 100vh; gap: 16px;
+        }
+        #login-screen h1 { color: #1a73e8; font-size: 1.6rem; }
+        #login-box {
+            background: #fff; padding: 36px; border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+            display: flex; flex-direction: column; gap: 14px; width: 340px;
+        }
+        #login-box input {
+            padding: 13px 16px; border: 2px solid #ddd;
+            border-radius: 10px; font-size: 1rem; outline: none; width: 100%; box-sizing: border-box;
+        }
+        #login-box input:focus { border-color: #1a73e8; }
+        #pwd-wrapper { position: relative; }
+        #pwd-toggle {
+            position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+            background: none; border: none; cursor: pointer; font-size: 1.1rem; padding: 0; line-height: 1;
+        }
+        #login-error { color: #d93025; font-size: 0.9rem; display: none; }
+
+        /* ── Dashboard ── */
+        #dashboard { display: none; min-height: 100vh; }
+
+        header {
+            background: #1a73e8; color: #fff; padding: 0 32px;
+            display: flex; align-items: center; justify-content: space-between;
+            height: 58px;
+        }
+        header h1 { font-size: 1.15rem; font-weight: 700; }
+        .logout-btn {
+            background: rgba(255,255,255,0.18); border: none; color: #fff;
+            padding: 7px 18px; border-radius: 20px; cursor: pointer; font-size: 0.88rem;
+        }
+        .logout-btn:hover { background: rgba(255,255,255,0.32); }
+
+        /* ── Tabs ── */
+        .tab-bar {
+            background: #fff; border-bottom: 2px solid #e8f0fe;
+            display: flex; padding: 0 32px; gap: 4px;
+        }
+        .tab-btn {
+            padding: 13px 22px; border: none; background: none;
+            font-size: 0.93rem; font-weight: 600; color: #888;
+            cursor: pointer; border-bottom: 3px solid transparent;
+            margin-bottom: -2px; transition: color 0.15s;
+        }
+        .tab-btn.active { color: #1a73e8; border-bottom-color: #1a73e8; }
+        .tab-btn:hover:not(.active) { color: #555; }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* ── Container ── */
+        .container { max-width: 1000px; margin: 28px auto; padding: 0 20px; display: flex; flex-direction: column; gap: 24px; }
+
+        /* ── Cards ── */
+        .card { background: #fff; border-radius: 14px; box-shadow: 0 2px 12px rgba(0,0,0,0.07); padding: 28px; }
+        .card-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 22px; padding-bottom: 12px; border-bottom: 2px solid #e8f0fe;
+        }
+        .card-header h2 { font-size: 1.05rem; color: #1a73e8; }
+
+        /* ── Buttons ── */
+        .btn { padding: 10px 22px; border: none; border-radius: 22px; cursor: pointer; font-size: 0.92rem; font-weight: 600; transition: filter 0.15s; }
+        .btn:hover { filter: brightness(0.9); }
+        .btn-primary { background: #1a73e8; color: #fff; }
+        .btn-success { background: #1e8e3e; color: #fff; }
+        .btn-ghost   { background: #f1f3f4; color: #444; }
+        .btn-danger  { background: #fce8e6; color: #d93025; }
+        .btn-warn    { background: #fff8e1; color: #b45309; }
+        .btn-purple  { background: #f3e8ff; color: #6d28d9; }
+        .btn-sm { padding: 5px 12px; font-size: 0.82rem; }
+        .btn:disabled { background: #ccc; color: #fff; cursor: not-allowed; filter: none; }
+
+        /* ── Forms ── */
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .form-grid .full { grid-column: 1 / -1; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 0.83rem; font-weight: 700; color: #555; letter-spacing: 0.3px; }
+        .form-group input, .form-group textarea {
+            padding: 10px 14px; border: 2px solid #e0e0e0; border-radius: 9px;
+            font-size: 0.93rem; outline: none; font-family: inherit; resize: vertical;
+            transition: border-color 0.15s;
+        }
+        .form-group input:focus, .form-group textarea:focus { border-color: #1a73e8; }
+        .hint { font-size: 0.76rem; color: #999; margin-top: 2px; line-height: 1.4; }
+
+        .color-row { display: flex; gap: 10px; align-items: center; }
+        .color-row input[type="color"] {
+            width: 50px; height: 40px; padding: 2px 4px; cursor: pointer;
+            border-radius: 9px; border: 2px solid #e0e0e0; flex-shrink: 0;
+        }
+        .color-row input[type="text"] { flex: 1; }
+
+        .pw-wrap { position: relative; }
+        .pw-wrap input { width: 100%; padding-right: 44px; }
+        .pw-toggle {
+            position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+            background: none; border: none; cursor: pointer; color: #888; font-size: 1rem;
+            padding: 0; line-height: 1;
+        }
+
+        .form-msg { margin-top: 10px; font-size: 0.88rem; min-height: 18px; }
+        .success-msg { color: #1e8e3e; }
+        .error-msg   { color: #d93025; }
+
+        /* ── Table ── */
+        table { width: 100%; border-collapse: collapse; font-size: 0.87rem; }
+        thead tr { background: #e8f0fe; }
+        th, td { padding: 11px 13px; text-align: left; border-bottom: 1px solid #f0f0f0; }
+        th { font-weight: 700; color: #1a73e8; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.3px; }
+        tr:hover td { background: #fafbff; }
+        .id-badge {
+            background: #e8f0fe; color: #1a73e8; padding: 3px 9px;
+            border-radius: 6px; font-size: 0.76rem; font-family: monospace;
+        }
+        .color-dot {
+            display: inline-block; width: 14px; height: 14px;
+            border-radius: 50%; border: 2px solid rgba(0,0,0,0.1);
+            vertical-align: middle; margin-right: 6px;
+        }
+        .action-cell { display: flex; gap: 5px; flex-wrap: wrap; align-items: center; }
+        .empty-state { text-align: center; color: #bbb; padding: 36px 0; font-style: italic; font-size: 0.95rem; }
+
+        /* ── Client Profile Editor ── */
+        #client-editor-view { display: none; }
+        #client-editor-view.active { display: block; }
+
+        .editor-back {
+            display: flex; align-items: center; gap: 10px;
+            margin-bottom: 22px;
+        }
+        .back-btn {
+            background: none; border: none; cursor: pointer;
+            color: #1a73e8; font-size: 0.95rem; font-weight: 600;
+            display: flex; align-items: center; gap: 6px; padding: 6px 0;
+        }
+        .back-btn:hover { text-decoration: underline; }
+
+        .editor-title { font-size: 1.25rem; font-weight: 700; color: #202124; }
+        .editor-subtitle { font-size: 0.85rem; color: #888; margin-top: 2px; }
+
+        /* Avatar preview in editor */
+        .avatar-preview-row {
+            display: flex; align-items: center; gap: 16px; margin-bottom: 6px;
+        }
+        .avatar-preview {
+            width: 72px; height: 72px; border-radius: 50%;
+            border: 3px solid #e0e0e0; object-fit: cover;
+            background: #f0f4f8; display: flex; align-items: center; justify-content: center;
+            overflow: hidden; flex-shrink: 0;
+        }
+        .avatar-preview img { width: 72px; height: 72px; object-fit: cover; border-radius: 50%; }
+        .avatar-preview svg { width: 36px; height: 36px; fill: #bbb; }
+
+        /* Section headers inside editor */
+        .section-header {
+            font-size: 0.82rem; font-weight: 700; color: #888;
+            text-transform: uppercase; letter-spacing: 0.8px;
+            padding-bottom: 10px; margin-bottom: 18px;
+            border-bottom: 1px solid #f0f0f0; margin-top: 28px;
+        }
+        .section-header:first-child { margin-top: 0; }
+
+        .editor-actions {
+            display: flex; gap: 12px; justify-content: flex-end;
+            margin-top: 28px; padding-top: 20px; border-top: 2px solid #f0f0f0;
+        }
+
+        /* ── Settings ── */
+        .settings-section { margin-bottom: 30px; }
+        .settings-section:last-child { margin-bottom: 0; }
+        .settings-section h3 {
+            font-size: 0.82rem; font-weight: 700; color: #888;
+            text-transform: uppercase; letter-spacing: 0.8px;
+            margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid #f0f0f0;
+        }
+
+        /* ── Snippet Modal ── */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.45); z-index: 1000;
+            align-items: center; justify-content: center;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal-box {
+            background: #fff; border-radius: 16px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.2);
+            padding: 32px; width: 580px; max-width: calc(100vw - 40px);
+            max-height: 88vh; overflow-y: auto;
+        }
+        .modal-box h2 { font-size: 1.1rem; color: #1a73e8; margin-bottom: 18px; }
+        .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
+        .snippet-code {
+            background: #1e1e2e; color: #cdd6f4; border-radius: 10px;
+            padding: 16px; font-family: monospace; font-size: 0.8rem;
+            line-height: 1.8; white-space: pre-wrap; word-break: break-all; margin: 14px 0;
+        }
+    </style>
+</head>
+<body>
+
+<!-- ── LOGIN ── -->
+<div id="login-screen">
+    <h1>&#128274; Admin Login</h1>
+    <div id="login-box">
+        <div id="pwd-wrapper">
+            <input type="password" id="pwd-input" placeholder="Enter admin password" />
+            <button id="pwd-toggle" type="button" onclick="togglePwd()" title="Show/hide password">👁</button>
+        </div>
+        <span id="login-error">Incorrect password. Please try again.</span>
+        <button class="btn btn-primary" style="border-radius:10px;padding:13px;" onclick="login()">Login</button>
+    </div>
+</div>
+
+<!-- ── DASHBOARD ── -->
+<div id="dashboard">
+    <header>
+        <h1>&#9881;&#65039; Dental AI — Admin</h1>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+    </header>
+
+    <div class="tab-bar">
+        <button class="tab-btn active" onclick="switchTab('clinics')">&#127968; Clinics</button>
+        <button class="tab-btn" onclick="switchTab('testbot')">&#129302; Test Bot</button>
+        <button class="tab-btn" onclick="switchTab('plans')">&#128176; Plans</button>
+        <button class="tab-btn" onclick="switchTab('settings')">&#128274; Settings</button>
+    </div>
+
+    <!-- ══════════ CLINICS TAB ══════════ -->
+    <div id="tab-clinics" class="tab-content active">
+        <div class="container">
+
+            <!-- LIST VIEW -->
+            <div id="clinics-list-view">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>&#127968; Registered Clinics</h2>
+                        <button class="btn btn-primary btn-sm" onclick="openEditorForNew()" style="padding:9px 18px;font-size:0.88rem;">
+                            &#43; Add New Clinic
+                        </button>
+                    </div>
+                    <div id="clients-container"><div class="empty-state">Loading...</div></div>
+                </div>
+            </div>
+
+            <!-- PROFILE EDITOR VIEW -->
+            <div id="client-editor-view">
+                <div class="editor-back">
+                    <button class="back-btn" onclick="backToList()">&#8592; Back to Clinics</button>
+                    <div>
+                        <div class="editor-title" id="editor-title">Add New Clinic</div>
+                        <div class="editor-subtitle" id="editor-subtitle">Fill in the details below</div>
+                    </div>
+                </div>
+
+                <div class="card">
+
+                    <!-- SECTION: Basic Information -->
+                    <div class="section-header">&#128196; Basic Information</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Clinic Name *</label>
+                            <input type="text" id="e-name" placeholder="e.g. Smile Dental Clinic" />
+                        </div>
+                        <div class="form-group">
+                            <label>Website URL *</label>
+                            <input type="text" id="e-website" placeholder="https://www.theirclinic.co.uk/" />
+                        </div>
+                        <div class="form-group">
+                            <label>Admin Email (for notifications) *</label>
+                            <input type="email" id="e-email" placeholder="admin@theirclinic.co.uk" />
+                        </div>
+                        <div class="form-group">
+                            <label>Clinic Phone Number</label>
+                            <input type="text" id="e-phone" placeholder="+44 20 1234 5678" />
+                            <span class="hint">Shown as a Call Us button in the chat widget.</span>
+                        </div>
+                        <div class="form-group">
+                            <label>Calendly / Booking Link</label>
+                            <input type="text" id="e-calendly" placeholder="https://calendly.com/theirclinic" />
+                        </div>
+                        <div class="form-group">
+                            <label>Office Opens (24h)</label>
+                            <input type="time" id="e-officeopen" value="09:00" />
+                        </div>
+                        <div class="form-group">
+                            <label>Office Closes (24h)</label>
+                            <input type="time" id="e-officeclose" value="17:00" />
+                        </div>
+                        <div class="form-group full">
+                            <label>Working Days</label>
+                            <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:6px;">
+                                <label style="display:flex;align-items:center;gap:5px;font-weight:400;cursor:pointer;"><input type="checkbox" class="day-cb" value="0"> Sun</label>
+                                <label style="display:flex;align-items:center;gap:5px;font-weight:400;cursor:pointer;"><input type="checkbox" class="day-cb" value="1" checked> Mon</label>
+                                <label style="display:flex;align-items:center;gap:5px;font-weight:400;cursor:pointer;"><input type="checkbox" class="day-cb" value="2" checked> Tue</label>
+                                <label style="display:flex;align-items:center;gap:5px;font-weight:400;cursor:pointer;"><input type="checkbox" class="day-cb" value="3" checked> Wed</label>
+                                <label style="display:flex;align-items:center;gap:5px;font-weight:400;cursor:pointer;"><input type="checkbox" class="day-cb" value="4" checked> Thu</label>
+                                <label style="display:flex;align-items:center;gap:5px;font-weight:400;cursor:pointer;"><input type="checkbox" class="day-cb" value="5" checked> Fri</label>
+                                <label style="display:flex;align-items:center;gap:5px;font-weight:400;cursor:pointer;"><input type="checkbox" class="day-cb" value="6"> Sat</label>
+                            </div>
+                        </div>
+                        <div class="form-group full">
+                            <label>Clinic Description</label>
+                            <textarea id="e-desc" rows="2" placeholder="Short description for the AI to use about this clinic..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- SECTION: AI Persona -->
+                    <div class="section-header">&#129302; AI Persona</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Bot Display Name</label>
+                            <input type="text" id="e-botname" placeholder="AI Dental Assistant" />
+                        </div>
+                        <div class="form-group">
+                            <label>Bot Profile Photo URL</label>
+                            <input type="text" id="e-avatar" placeholder="https://example.com/photo.jpg"
+                                   oninput="previewAvatar(this.value)" />
+                            <span class="hint">Direct image URL (JPG/PNG). Leave blank for default icon.</span>
+                        </div>
+                        <div class="form-group full">
+                            <div class="avatar-preview-row">
+                                <div class="avatar-preview" id="avatar-preview">
+                                    <svg viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+                                </div>
+                                <div style="font-size:0.82rem;color:#888;">Avatar preview — updates as you type the URL above</div>
+                            </div>
+                        </div>
+                        <div class="form-group full">
+                            <label>Extra Clinic Information</label>
+                            <textarea id="e-extrainfo" rows="3" placeholder="Additional details the AI should know: services offered, pricing, opening hours, team info, FAQs..."></textarea>
+                        </div>
+                        <div class="form-group full">
+                            <label>Special Instructions for AI</label>
+                            <textarea id="e-special" rows="2" placeholder="e.g. Always mention the free consultation offer. Never discuss competitors. Speak in a formal tone..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- SECTION: Chat Appearance -->
+                    <div class="section-header">&#127912; Chat Appearance</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Primary Color (buttons, header, messages)</label>
+                            <div class="color-row">
+                                <input type="color" id="e-color-picker" value="#1a73e8"
+                                       oninput="syncColor('e-color','e-color-picker')" />
+                                <input type="text"  id="e-color" value="#1a73e8" maxlength="7"
+                                       oninput="syncPicker('e-color','e-color-picker')" />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Chat Background Color</label>
+                            <div class="color-row">
+                                <input type="color" id="e-bgcolor-picker" value="#f0f4f8"
+                                       oninput="syncColor('e-bgcolor','e-bgcolor-picker')" />
+                                <input type="text"  id="e-bgcolor" value="#f0f4f8" maxlength="7"
+                                       oninput="syncPicker('e-bgcolor','e-bgcolor-picker')" />
+                            </div>
+                        </div>
+                        <div class="form-group full">
+                            <label>Background Image URL</label>
+                            <input type="text" id="e-bgimage" placeholder="https://example.com/background.jpg (optional — overrides background color)" />
+                            <span class="hint">Use a wide landscape image. Leave blank to use the background color instead.</span>
+                        </div>
+                    </div>
+
+                    <!-- SECTION: Google Sheets Integration -->
+                    <div class="section-header">&#128196; Google Sheets Integration</div>
+                    <div class="form-grid">
+                        <div class="form-group full">
+                            <label>Google Sheet ID (for this clinic only)</label>
+                            <input type="text" id="e-sheetid" placeholder="e.g. 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms" />
+                            <span class="hint">
+                                Found in your Google Sheets URL: <code>docs.google.com/spreadsheets/d/<strong>SHEET_ID</strong>/edit</code><br>
+                                All leads and chat history for this clinic will be saved here in separate tabs.<br>
+                                Leave blank to use the global Sheet ID from Settings.
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="editor-actions">
+                        <button class="btn btn-ghost" onclick="backToList()">Cancel</button>
+                        <button class="btn btn-success" id="editor-save-btn" onclick="saveClient()">&#10003; Save Clinic</button>
+                    </div>
+                    <div class="form-msg" id="editor-msg"></div>
+                </div>
+            </div>
+
+        </div>
+    </div><!-- end tab-clinics -->
+
+    <!-- ══════════ SETTINGS TAB ══════════ -->
+    <div id="tab-settings" class="tab-content">
+        <div class="container">
+            <div class="card">
+                <div class="card-header">
+                    <h2>&#128274; Platform Settings</h2>
+                </div>
+
+                <div class="settings-section">
+                    <h3>&#129302; AI Configuration</h3>
+                    <div class="form-group">
+                        <label>OpenRouter API Key</label>
+                        <div class="pw-wrap">
+                            <input type="password" id="s-api-key" placeholder="sk-or-..." />
+                            <button class="pw-toggle" onclick="togglePw('s-api-key',this)">&#128065;</button>
+                        </div>
+                        <span class="hint">Get your key from <a href="https://openrouter.ai/keys" target="_blank">openrouter.ai/keys</a> — powers all AI conversations</span>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3>&#128231; Email Notifications</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Sender Gmail Address</label>
+                            <input type="email" id="s-sender-email" placeholder="yourbot@gmail.com" />
+                        </div>
+                        <div class="form-group">
+                            <label>Gmail App Password</label>
+                            <div class="pw-wrap">
+                                <input type="password" id="s-sender-pw" placeholder="xxxx xxxx xxxx xxxx" />
+                                <button class="pw-toggle" onclick="togglePw('s-sender-pw',this)">&#128065;</button>
+                            </div>
+                            <span class="hint">Use a Gmail <strong>App Password</strong> — not your regular password.<br>Create one at myaccount.google.com → Security → App passwords</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3>&#128196; Google Sheets (Global Default)</h3>
+                    <div class="form-group" style="margin-bottom:16px;">
+                        <label>Default Google Sheet ID</label>
+                        <input type="text" id="s-sheet-id" placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms" />
+                        <span class="hint">Used for any clinic that doesn't have its own Sheet ID configured. Found in the Google Sheets URL.</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Google Service Account Credentials (JSON)</label>
+                        <textarea id="s-goog-creds" rows="7" placeholder='{"type":"service_account","project_id":"...","private_key":"...",...}'></textarea>
+                        <span class="hint">
+                            Paste the full contents of your service account JSON key file.<br>
+                            Used by all clinics to access their sheets — the same account can access multiple sheets.
+                        </span>
+                    </div>
+                </div>
+
+                <button class="btn btn-success" id="settings-save-btn" onclick="saveSettings()" style="margin-top:8px;">&#10003; Save All Settings</button>
+                <div class="form-msg" id="settings-msg"></div>
+            </div>
+        </div>
+    </div><!-- end tab-settings -->
+
+    <!-- ══════════ TEST BOT TAB ══════════ -->
+    <div id="tab-testbot" class="tab-content">
+        <div class="container">
+            <div class="card">
+                <div class="card-header">
+                    <h2>&#129302; Test Bot Builder</h2>
+                    <div style="font-size:0.82rem;color:#888;">Create a demo bot to show to potential clinic clients</div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Clinic / Demo Name *</label>
+                        <input type="text" id="tb-name" placeholder="e.g. Smile Dental Demo" />
+                    </div>
+                    <div class="form-group">
+                        <label>Bot Name</label>
+                        <input type="text" id="tb-botname" placeholder="e.g. Dental Support Team" />
+                    </div>
+                    <div class="form-group">
+                        <label>Brand Color</label>
+                        <div class="color-row">
+                            <input type="color" id="tb-colorpicker" value="#1a73e8" oninput="document.getElementById('tb-colorhex').value=this.value" />
+                            <input type="text" id="tb-colorhex" value="#1a73e8" placeholder="#1a73e8" oninput="document.getElementById('tb-colorpicker').value=this.value" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Clinic Website</label>
+                        <input type="text" id="tb-website" placeholder="https://example.com" />
+                    </div>
+                    <div class="form-group full">
+                        <label>Services &amp; Treatments Offered</label>
+                        <textarea id="tb-desc" rows="3" placeholder="e.g. Teeth whitening, implants, braces, routine check-ups, emergency dental care..."></textarea>
+                    </div>
+                    <div class="form-group full">
+                        <label>Special Info / Custom Knowledge</label>
+                        <textarea id="tb-special" rows="4" placeholder="Add any specific info you want the bot to know: pricing, promotions, team info, location, unique selling points..."></textarea>
+                    </div>
+                    <div class="form-group full">
+                        <label>Extra Clinic Info</label>
+                        <textarea id="tb-extra" rows="3" placeholder="e.g. We are a family-run clinic with 15 years experience, NHS and private patients welcome..."></textarea>
+                    </div>
+                </div>
+
+                <div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+                    <button class="btn btn-primary" id="tb-save-btn" onclick="saveTestBot()">&#129302; Create / Update Test Bot</button>
+                    <button class="btn btn-ghost" onclick="openTestBotChat()">&#128172; Open Test Chat</button>
+                    <button class="btn btn-purple" onclick="showTestBotEmbed()">&#128203; Get Embed Code</button>
+                </div>
+                <div class="form-msg" id="tb-msg" style="margin-top:10px;"></div>
+            </div>
+
+            <div class="card" id="tb-embed-card" style="display:none;">
+                <div class="card-header"><h2>&#128203; Test Bot Embed Code</h2></div>
+                <p style="font-size:0.85rem;color:#666;margin-bottom:12px;">Paste this on any website to show the demo widget to a potential clinic client:</p>
+                <textarea id="tb-embed-code" rows="5" readonly
+                    style="width:100%;font-family:monospace;font-size:0.8rem;padding:12px;border:2px solid #e0e0e0;border-radius:10px;background:#f8f9fa;resize:none;outline:none;"></textarea>
+                <div style="margin-top:10px;display:flex;gap:10px;">
+                    <button class="btn btn-primary btn-sm" onclick="copyTestBotEmbed()">&#128203; Copy</button>
+                    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('tb-embed-card').style.display='none'">Close</button>
+                </div>
+                <div id="tb-embed-copy-msg" style="font-size:0.82rem;color:#1e8e3e;margin-top:6px;display:none;">&#10003; Copied to clipboard!</div>
+            </div>
+        </div>
+    </div><!-- end tab-testbot -->
+
+    <!-- ══════════ PLANS TAB ══════════ -->
+    <div id="tab-plans" class="tab-content">
+        <div class="container">
+            <div class="card">
+                <div class="card-header">
+                    <h2>&#128176; Pricing Plans</h2>
+                    <button class="btn btn-primary btn-sm" onclick="addPlan()">+ Add Plan</button>
+                </div>
+                <p style="font-size:.84rem;color:#888;margin-bottom:20px;">These plans appear on your public homepage. Edit, reorder, or remove them as needed.</p>
+                <div id="plans-list"></div>
+                <div style="margin-top:22px;display:flex;gap:10px;align-items:center;">
+                    <button class="btn btn-success" id="plans-save-btn" onclick="savePlans()">&#10003; Save All Plans</button>
+                    <div class="form-msg" id="plans-msg"></div>
+                </div>
+            </div>
+        </div>
+    </div><!-- end tab-plans -->
+
+</div><!-- end dashboard -->
+
+<!-- ── SNIPPET MODAL ── -->
+<div class="modal-overlay" id="snippet-modal">
+    <div class="modal-box">
+        <h2>&#128203; Widget Embed Code</h2>
+        <p style="font-size:0.88rem;color:#555;line-height:1.6;">
+            Paste this snippet inside the <code>&lt;body&gt;</code> of any webpage to show a floating chat bubble.
+        </p>
+        <div class="snippet-code" id="snippet-code"></div>
+        <p style="font-size:0.78rem;color:#999;">The widget auto-loads this clinic's color, bot name, and avatar from the server.</p>
+        <div class="modal-footer">
+            <button class="btn btn-ghost btn-sm" onclick="closeSnippetModal()">Close</button>
+            <button class="btn btn-primary btn-sm" onclick="copySnippet()" id="snippet-copy-btn">&#128203; Copy Code</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let adminPassword = '';
+    let editingClientId = null;
+    let allClients = {};
+
+    document.getElementById('pwd-input').addEventListener('keydown', e => {
+        if (e.key === 'Enter') login();
+    });
+
+    // ── Auth ──────────────────────────────────────────────────────────────────
+
+    function togglePwd() {
+        const input = document.getElementById('pwd-input');
+        const btn = document.getElementById('pwd-toggle');
+        if (input.type === 'password') {
+            input.type = 'text';
+            btn.textContent = '🙈';
+        } else {
+            input.type = 'password';
+            btn.textContent = '👁';
+        }
+    }
+
+    function login() {
+        adminPassword = document.getElementById('pwd-input').value.trim();
+        if (!adminPassword) return;
+        fetchClients(true);
+    }
+
+    function logout() {
+        adminPassword = '';
+        document.getElementById('dashboard').style.display = 'none';
+        document.getElementById('login-screen').style.display = 'flex';
+        document.getElementById('pwd-input').value = '';
+        document.getElementById('login-error').style.display = 'none';
+    }
+
+    // ── Tab switching ─────────────────────────────────────────────────────────
+
+    function switchTab(name) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById('tab-' + name).classList.add('active');
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            if (btn.getAttribute('onclick').includes("'" + name + "'")) btn.classList.add('active');
+        });
+        if (name === 'settings') loadSettings();
+        if (name === 'clinics') backToList();
+        if (name === 'testbot') loadTestBot();
+        if (name === 'plans') loadPlans();
+    }
+
+    // ── Test Bot ──────────────────────────────────────────────────────────────
+    const TEST_BOT_ID = 'demo_bot';
+
+    async function loadTestBot() {
+        try {
+            const res = await fetch(`/admin/clients/${TEST_BOT_ID}?password=${encodeURIComponent(adminPassword)}`);
+            if (!res.ok) return;
+            const d = await res.json();
+            document.getElementById('tb-name').value    = d.name || '';
+            document.getElementById('tb-botname').value = d.bot_name || '';
+            document.getElementById('tb-colorhex').value = d.color || '#1a73e8';
+            document.getElementById('tb-colorpicker').value = d.color || '#1a73e8';
+            document.getElementById('tb-website').value  = d.website || '';
+            document.getElementById('tb-desc').value     = d.description || '';
+            document.getElementById('tb-special').value  = d.special_instructions || '';
+            document.getElementById('tb-extra').value    = d.extra_info || '';
+        } catch {}
+    }
+
+    async function saveTestBot() {
+        const name = document.getElementById('tb-name').value.trim();
+        if (!name) { document.getElementById('tb-msg').innerHTML = '<span style="color:#d93025">Clinic name is required.</span>'; return; }
+        const btn = document.getElementById('tb-save-btn');
+        btn.disabled = true;
+        document.getElementById('tb-msg').innerHTML = 'Saving...';
+        const website = document.getElementById('tb-website').value.trim() || 'https://nexotech.demo';
+        const body = {
+            password: adminPassword,
+            name,
+            email:                 'demo@nexotech.com',
+            phone:                 '',
+            bot_name:              document.getElementById('tb-botname').value.trim() || 'Dental Support Team',
+            color:                 document.getElementById('tb-colorhex').value.trim() || '#1a73e8',
+            website,
+            description:           document.getElementById('tb-desc').value.trim(),
+            special_instructions:  document.getElementById('tb-special').value.trim(),
+            extra_info:            document.getElementById('tb-extra').value.trim(),
+        };
+        try {
+            const res = await fetch(`/admin/clients/${TEST_BOT_ID}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            if (res.status === 404) {
+                const res2 = await fetch('/admin/clients', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ...body, client_id: TEST_BOT_ID })
+                });
+                if (!res2.ok) throw new Error();
+            } else if (!res.ok) throw new Error();
+            document.getElementById('tb-msg').innerHTML = '<span style="color:#1e8e3e">&#10003; Test bot saved! Click "Open Test Chat" to try it.</span>';
+        } catch {
+            document.getElementById('tb-msg').innerHTML = '<span style="color:#d93025">Error saving. Try again.</span>';
+        }
+        btn.disabled = false;
+    }
+
+    function openTestBotChat() {
+        window.open('/' + TEST_BOT_ID + '/chat', '_blank');
+    }
+
+    function showTestBotEmbed() {
+        const origin = window.location.origin;
+        const color  = document.getElementById('tb-colorhex').value || '#1a73e8';
+        const code   = `<!-- NexoTech Dental AI Demo Widget -->\n<script src="${origin}/widget.js"\n        data-client-id="${TEST_BOT_ID}"\n        data-color="${color}"\n        defer><\/script>`;
+        document.getElementById('tb-embed-code').value = code;
+        document.getElementById('tb-embed-card').style.display = 'block';
+        document.getElementById('tb-embed-card').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function copyTestBotEmbed() {
+        const ta = document.getElementById('tb-embed-code');
+        ta.select();
+        document.execCommand('copy');
+        const msg = document.getElementById('tb-embed-copy-msg');
+        msg.style.display = 'block';
+        setTimeout(() => msg.style.display = 'none', 2500);
+    }
+
+    // ── Plans ─────────────────────────────────────────────────────────────────
+
+    let plansData = [];
+
+    async function loadPlans() {
+        try {
+            const res = await fetch(`/admin/plans?password=${encodeURIComponent(adminPassword)}`);
+            if (!res.ok) return;
+            plansData = await res.json();
+        } catch { plansData = []; }
+        renderPlans();
+    }
+
+    function renderPlans() {
+        const list = document.getElementById('plans-list');
+        if (!plansData.length) {
+            list.innerHTML = '<p style="color:#aaa;font-size:.9rem;">No plans yet. Click "+ Add Plan" to create one.</p>';
+            return;
+        }
+        list.innerHTML = plansData.map((p, i) => `
+            <div class="plan-editor" id="plan-${i}" style="border:2px solid ${p.featured ? '#1a73e8' : '#e0e0e0'};border-radius:12px;padding:22px;margin-bottom:18px;position:relative;background:${p.featured ? '#f0f6ff' : '#fafafa'};">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+                    <div style="font-weight:700;font-size:1rem;color:#1a73e8;">Plan ${i+1}${p.featured ? ' ⭐ Featured' : ''}</div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        ${i > 0 ? `<button class="btn btn-ghost btn-sm" onclick="movePlan(${i},-1)">▲ Up</button>` : ''}
+                        ${i < plansData.length-1 ? `<button class="btn btn-ghost btn-sm" onclick="movePlan(${i},1)">▼ Down</button>` : ''}
+                        <button class="btn btn-danger btn-sm" onclick="deletePlan(${i})">✕ Remove</button>
+                    </div>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Plan Name</label>
+                        <input type="text" value="${esc(p.name)}" oninput="plansData[${i}].name=this.value;refreshPlanHeader(${i})" placeholder="e.g. Starter" />
+                    </div>
+                    <div class="form-group">
+                        <label>Tagline</label>
+                        <input type="text" value="${esc(p.tagline||'')}" oninput="plansData[${i}].tagline=this.value" placeholder="Short description under price" />
+                    </div>
+                    <div class="form-group">
+                        <label>Price</label>
+                        <input type="text" value="${esc(p.price)}" oninput="plansData[${i}].price=this.value" placeholder="e.g. 49" />
+                    </div>
+                    <div class="form-group">
+                        <label>Currency Symbol</label>
+                        <input type="text" value="${esc(p.currency||'£')}" oninput="plansData[${i}].currency=this.value" placeholder="£ or $ or €" />
+                    </div>
+                    <div class="form-group">
+                        <label>Period</label>
+                        <input type="text" value="${esc(p.period||'month')}" oninput="plansData[${i}].period=this.value" placeholder="month or year" />
+                    </div>
+                    <div class="form-group">
+                        <label>Badge Label</label>
+                        <input type="text" value="${esc(p.badge||'')}" oninput="plansData[${i}].badge=this.value" placeholder="e.g. Most Popular (leave empty to hide)" />
+                    </div>
+                    <div class="form-group">
+                        <label>CTA Button Text</label>
+                        <input type="text" value="${esc(p.cta||'Get Started')}" oninput="plansData[${i}].cta=this.value" placeholder="e.g. Get Started" />
+                    </div>
+                    <div class="form-group" style="display:flex;flex-direction:row;align-items:center;gap:10px;padding-top:22px;">
+                        <input type="checkbox" id="plan-feat-${i}" ${p.featured ? 'checked' : ''} onchange="plansData[${i}].featured=this.checked;renderPlans()" style="width:18px;height:18px;cursor:pointer;" />
+                        <label for="plan-feat-${i}" style="font-weight:700;cursor:pointer;">Highlight as featured</label>
+                    </div>
+                    <div class="form-group full">
+                        <label>Features List <span style="font-weight:400;color:#aaa;">(one per line)</span></label>
+                        <textarea rows="6" oninput="plansData[${i}].features=this.value.split('\\n').map(s=>s.trim()).filter(Boolean)" style="font-size:.88rem;">${(p.features||[]).join('\n')}</textarea>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function refreshPlanHeader(i) {
+        const el = document.querySelector(`#plan-${i} [style*="Plan ${i+1}"]`);
+        if (el) el.textContent = `Plan ${i+1}${plansData[i].featured ? ' ⭐ Featured' : ''}`;
+    }
+
+    function esc(s) { return String(s||'').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+    function addPlan() {
+        plansData.push({ name: 'New Plan', price: '0', currency: '£', period: 'month', badge: '', featured: false, tagline: '', features: [], cta: 'Get Started' });
+        renderPlans();
+        document.getElementById('plans-list').lastElementChild?.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function deletePlan(i) {
+        if (!confirm(`Remove plan "${plansData[i].name}"?`)) return;
+        plansData.splice(i, 1);
+        renderPlans();
+    }
+
+    function movePlan(i, dir) {
+        const j = i + dir;
+        if (j < 0 || j >= plansData.length) return;
+        [plansData[i], plansData[j]] = [plansData[j], plansData[i]];
+        renderPlans();
+    }
+
+    async function savePlans() {
+        const btn = document.getElementById('plans-save-btn');
+        btn.disabled = true;
+        document.getElementById('plans-msg').innerHTML = 'Saving...';
+        try {
+            const res = await fetch('/admin/plans', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: adminPassword, plans: plansData })
+            });
+            if (!res.ok) throw new Error();
+            document.getElementById('plans-msg').innerHTML = '<span style="color:#1e8e3e">&#10003; Plans saved! Homepage updated.</span>';
+            setTimeout(() => document.getElementById('plans-msg').innerHTML = '', 3000);
+        } catch {
+            document.getElementById('plans-msg').innerHTML = '<span style="color:#d93025">Error saving. Try again.</span>';
+        }
+        btn.disabled = false;
+    }
+
+    // ── Clinic list view ──────────────────────────────────────────────────────
+
+    async function fetchClients(isLogin = false) {
+        try {
+            const res = await fetch(`/admin/clients?password=${encodeURIComponent(adminPassword)}`);
+            if (res.status === 401) {
+                if (isLogin) {
+                    document.getElementById('login-error').style.display = 'block';
+                    adminPassword = '';
+                }
+                return;
+            }
+            allClients = await res.json();
+            if (isLogin) {
+                document.getElementById('login-error').style.display = 'none';
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+            }
+            renderClients(allClients);
+        } catch (e) { console.error(e); }
+    }
+
+    function renderClients(clients) {
+        const container = document.getElementById('clients-container');
+        const entries = Object.entries(clients);
+        if (!entries.length) {
+            container.innerHTML = '<div class="empty-state">No clinics yet — click "Add New Clinic" to get started.</div>';
+            return;
+        }
+
+        const origin = window.location.origin;
+        let html = `<table><thead><tr>
+            <th>ID</th><th>Name</th><th>Bot</th><th>Sheet</th><th>Actions</th>
+        </tr></thead><tbody>`;
+
+        for (const [id, cfg] of entries) {
+            const color     = cfg.color || '#1a73e8';
+            const botName   = cfg.bot_name || 'AI Dental Assistant';
+            const hasSheet  = cfg.google_sheet_id ? '&#128200; Yes' : '<span style="color:#bbb;">None</span>';
+            const chatUrl   = `${origin}/${id}/chat`;
+
+            let avatarHtml = '';
+            if (cfg.bot_avatar) {
+                avatarHtml = `<img src="${cfg.bot_avatar}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:7px;border:2px solid ${color};" onerror="this.style.display='none'" />`;
+            } else {
+                avatarHtml = `<span style="display:inline-block;width:28px;height:28px;border-radius:50%;background:${color};vertical-align:middle;margin-right:7px;"></span>`;
+            }
+
+            html += `<tr>
+                <td><span class="id-badge">${id}</span></td>
+                <td><strong>${cfg.name}</strong><br><span style="font-size:0.78rem;color:#888;">${cfg.email}</span></td>
+                <td>
+                    ${avatarHtml}
+                    <span style="font-size:0.83rem;">${botName}</span><br>
+                    <span class="color-dot" style="background:${color};"></span>
+                    <span style="font-size:0.76rem;color:#888;">${color}</span>
+                </td>
+                <td style="font-size:0.82rem;">${hasSheet}</td>
+                <td>
+                    <div class="action-cell">
+                        <button class="btn btn-ghost btn-sm" id="copy-${id}" onclick="copyLink('${chatUrl}','${id}')">&#128203; Link</button>
+                        <button class="btn btn-purple btn-sm" onclick="showSnippet('${id}','${cfg.name}','${color}','${(cfg.bot_avatar||'').replace(/'/g,'')}')">&#60;/&#62; Embed</button>
+                        <button class="btn btn-warn btn-sm" onclick="openEditorForEdit('${id}')">&#9998; Edit</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteClient('${id}')">Delete</button>
+                    </div>
+                </td>
+            </tr>`;
+        }
+        html += '</tbody></table>';
+        container.innerHTML = html;
+    }
+
+    function copyLink(url, id) {
+        navigator.clipboard.writeText(url).then(() => {
+            const btn = document.getElementById(`copy-${id}`);
+            btn.textContent = '✓ Copied!';
+            btn.style.background = '#e6f4ea'; btn.style.color = '#1e8e3e';
+            setTimeout(() => { btn.innerHTML = '&#128203; Link'; btn.style = ''; }, 2200);
+        });
+    }
+
+    async function deleteClient(clientId) {
+        if (!confirm(`Delete clinic "${clientId}"? This cannot be undone.`)) return;
+        const res = await fetch(`/admin/clients/${clientId}?password=${encodeURIComponent(adminPassword)}`, { method: 'DELETE' });
+        if (res.ok) fetchClients();
+        else alert('Failed to delete. Please try again.');
+    }
+
+    // ── Profile Editor ────────────────────────────────────────────────────────
+
+    function backToList() {
+        document.getElementById('clinics-list-view').style.display = 'block';
+        document.getElementById('client-editor-view').classList.remove('active');
+        editingClientId = null;
+        document.getElementById('editor-msg').innerHTML = '';
+    }
+
+    function openEditorForNew() {
+        editingClientId = null;
+        clearEditor();
+        document.getElementById('editor-title').textContent = 'Add New Clinic';
+        document.getElementById('editor-subtitle').textContent = 'Fill in the details below to add a new clinic';
+        document.getElementById('editor-save-btn').textContent = '✓ Add Clinic';
+        showEditor();
+    }
+
+    function openEditorForEdit(clientId) {
+        editingClientId = clientId;
+        const cfg = allClients[clientId] || {};
+        populateEditor(cfg);
+        document.getElementById('editor-title').textContent = 'Editing: ' + cfg.name;
+        document.getElementById('editor-subtitle').textContent = 'Client ID: ' + clientId;
+        document.getElementById('editor-save-btn').textContent = '✓ Save Changes';
+        showEditor();
+    }
+
+    function showEditor() {
+        document.getElementById('clinics-list-view').style.display = 'none';
+        document.getElementById('client-editor-view').classList.add('active');
+        window.scrollTo(0, 0);
+    }
+
+    function clearEditor() {
+        ['e-name','e-website','e-email','e-phone','e-calendly','e-desc','e-extrainfo','e-special','e-botname','e-avatar','e-bgimage','e-sheetid'].forEach(id => {
+            document.getElementById(id).value = '';
+        });
+        document.getElementById('e-color').value = '#1a73e8';
+        document.getElementById('e-color-picker').value = '#1a73e8';
+        document.getElementById('e-bgcolor').value = '#f0f4f8';
+        document.getElementById('e-bgcolor-picker').value = '#f0f4f8';
+        document.getElementById('e-officeopen').value  = '09:00';
+        document.getElementById('e-officeclose').value = '17:00';
+        document.querySelectorAll('.day-cb').forEach(cb => {
+            cb.checked = ['1','2','3','4','5'].includes(cb.value);
+        });
+        resetAvatarPreview('');
+    }
+
+    function populateEditor(cfg) {
+        document.getElementById('e-name').value      = cfg.name        || '';
+        document.getElementById('e-website').value   = cfg.website     || '';
+        document.getElementById('e-email').value     = cfg.email       || '';
+        document.getElementById('e-phone').value     = cfg.phone       || '';
+        document.getElementById('e-calendly').value  = cfg.calendly    || '';
+        document.getElementById('e-desc').value      = cfg.description || '';
+        document.getElementById('e-extrainfo').value = cfg.extra_info  || '';
+        document.getElementById('e-special').value   = cfg.special_instructions || '';
+        document.getElementById('e-botname').value   = cfg.bot_name    || '';
+        document.getElementById('e-avatar').value    = cfg.bot_avatar  || '';
+        document.getElementById('e-bgimage').value   = cfg.bg_image    || '';
+        document.getElementById('e-sheetid').value   = cfg.google_sheet_id || '';
+        document.getElementById('e-officeopen').value  = cfg.office_open  || '09:00';
+        document.getElementById('e-officeclose').value = cfg.office_close || '17:00';
+
+        const activeDays = (cfg.office_days || '1,2,3,4,5').split(',');
+        document.querySelectorAll('.day-cb').forEach(cb => {
+            cb.checked = activeDays.includes(cb.value);
+        });
+
+        const color = cfg.color || '#1a73e8';
+        document.getElementById('e-color').value        = color;
+        document.getElementById('e-color-picker').value = color;
+
+        const bgColor = cfg.bg_color || '#f0f4f8';
+        document.getElementById('e-bgcolor').value        = bgColor;
+        document.getElementById('e-bgcolor-picker').value = bgColor;
+
+        resetAvatarPreview(cfg.bot_avatar || '');
+        document.getElementById('editor-msg').innerHTML = '';
+    }
+
+    function previewAvatar(url) {
+        resetAvatarPreview(url);
+    }
+
+    function resetAvatarPreview(url) {
+        const el = document.getElementById('avatar-preview');
+        if (url) {
+            el.innerHTML = `<img src="${url}" onerror="this.parentElement.innerHTML='<svg viewBox=\\'0 0 24 24\\'><path d=\\'M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z\\'/></svg>'" />`;
+        } else {
+            el.innerHTML = `<svg viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>`;
+        }
+    }
+
+    async function saveClient() {
+        const name        = document.getElementById('e-name').value.trim();
+        const website     = document.getElementById('e-website').value.trim();
+        const email       = document.getElementById('e-email').value.trim();
+        const calendly    = document.getElementById('e-calendly').value.trim();
+        const description = document.getElementById('e-desc').value.trim();
+        const extra_info  = document.getElementById('e-extrainfo').value.trim();
+        const special_instructions = document.getElementById('e-special').value.trim();
+        const color       = document.getElementById('e-color').value.trim() || '#1a73e8';
+        const bot_name    = document.getElementById('e-botname').value.trim() || 'AI Dental Assistant';
+        const bot_avatar  = document.getElementById('e-avatar').value.trim();
+        const bg_color    = document.getElementById('e-bgcolor').value.trim() || '#f0f4f8';
+        const bg_image    = document.getElementById('e-bgimage').value.trim();
+        const google_sheet_id = document.getElementById('e-sheetid').value.trim();
+        const msgEl       = document.getElementById('editor-msg');
+        const saveBtn     = document.getElementById('editor-save-btn');
+
+        if (!name || !website || !email) {
+            msgEl.innerHTML = '<span class="error-msg">&#9888; Clinic Name, Website, and Email are required.</span>';
+            return;
+        }
+
+        saveBtn.disabled = true;
+        msgEl.innerHTML = 'Saving...';
+
+        const phone        = document.getElementById('e-phone').value.trim();
+        const office_open  = document.getElementById('e-officeopen').value  || '09:00';
+        const office_close = document.getElementById('e-officeclose').value || '17:00';
+        const office_days  = Array.from(document.querySelectorAll('.day-cb:checked')).map(cb => cb.value).join(',') || '1,2,3,4,5';
+
+        const body = { password: adminPassword, name, website, email, phone, calendly, description,
+                       extra_info, special_instructions, color, bot_name, bot_avatar,
+                       bg_color, bg_image, google_sheet_id, office_open, office_close, office_days };
+
+        try {
+            let res;
+            if (editingClientId) {
+                res = await fetch(`/admin/clients/${editingClientId}`, {
+                    method: 'PUT', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+            } else {
+                res = await fetch('/admin/clients', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+            }
+            const data = await res.json();
+            if (res.ok) {
+                await fetchClients();
+                backToList();
+            } else {
+                msgEl.innerHTML = `<span class="error-msg">${data.detail || 'Failed to save.'}</span>`;
+            }
+        } catch (e) {
+            msgEl.innerHTML = '<span class="error-msg">Network error. Please try again.</span>';
+        }
+        saveBtn.disabled = false;
+    }
+
+    // ── Color / form helpers ──────────────────────────────────────────────────
+
+    function syncColor(textId, pickerId) {
+        document.getElementById(textId).value = document.getElementById(pickerId).value;
+    }
+    function syncPicker(textId, pickerId) {
+        const v = document.getElementById(textId).value;
+        if (/^#[0-9a-fA-F]{6}$/.test(v)) document.getElementById(pickerId).value = v;
+    }
+    function togglePw(inputId, btn) {
+        const el = document.getElementById(inputId);
+        el.type = el.type === 'password' ? 'text' : 'password';
+        btn.textContent = el.type === 'password' ? '👁' : '🙈';
+    }
+
+    // ── Snippet modal ─────────────────────────────────────────────────────────
+
+    function showSnippet(clientId, clinicName, color, avatar) {
+        const origin = window.location.origin;
+        let code = `<!-- ${clinicName} — AI Chat Widget -->\n<script src="${origin}/widget.js"\n        data-client-id="${clientId}"\n        data-color="${color || '#1a73e8'}"`;
+        if (avatar) code += `\n        data-avatar="${avatar}"`;
+        code += `><\/script>`;
+        document.getElementById('snippet-code').textContent = code;
+        const btn = document.getElementById('snippet-copy-btn');
+        btn.innerHTML = '&#128203; Copy Code';
+        btn.style = '';
+        document.getElementById('snippet-modal').classList.add('open');
+    }
+
+    function closeSnippetModal() {
+        document.getElementById('snippet-modal').classList.remove('open');
+    }
+
+    function copySnippet() {
+        navigator.clipboard.writeText(document.getElementById('snippet-code').textContent).then(() => {
+            const btn = document.getElementById('snippet-copy-btn');
+            btn.innerHTML = '✓ Copied!';
+            btn.style.background = '#e6f4ea'; btn.style.color = '#1e8e3e';
+            setTimeout(() => { btn.innerHTML = '&#128203; Copy Code'; btn.style = ''; }, 2500);
+        });
+    }
+
+    document.getElementById('snippet-modal').addEventListener('click', function(e) {
+        if (e.target === this) closeSnippetModal();
+    });
+
+    // ── Settings ──────────────────────────────────────────────────────────────
+
+    async function loadSettings() {
+        try {
+            const res = await fetch(`/admin/settings?password=${encodeURIComponent(adminPassword)}`);
+            if (!res.ok) return;
+            const d = await res.json();
+            document.getElementById('s-api-key').value      = d.openrouter_api_key || '';
+            document.getElementById('s-sender-email').value = d.sender_email        || '';
+            document.getElementById('s-sender-pw').value    = d.sender_password     || '';
+            document.getElementById('s-sheet-id').value     = d.google_sheet_id     || '';
+            document.getElementById('s-goog-creds').value   = d.google_credentials  || '';
+        } catch (e) { console.error(e); }
+    }
+
+    async function saveSettings() {
+        const msgEl = document.getElementById('settings-msg');
+        const btn   = document.getElementById('settings-save-btn');
+        btn.disabled = true; msgEl.innerHTML = 'Saving...';
+        try {
+            const res = await fetch('/admin/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    password:           adminPassword,
+                    openrouter_api_key: document.getElementById('s-api-key').value.trim(),
+                    sender_email:       document.getElementById('s-sender-email').value.trim(),
+                    sender_password:    document.getElementById('s-sender-pw').value.trim(),
+                    google_sheet_id:    document.getElementById('s-sheet-id').value.trim(),
+                    google_credentials: document.getElementById('s-goog-creds').value.trim(),
+                })
+            });
+            const data = await res.json();
+            msgEl.innerHTML = res.ok
+                ? '<span class="success-msg">&#10003; Settings saved successfully.</span>'
+                : `<span class="error-msg">${data.detail || 'Failed to save.'}</span>`;
+        } catch (e) {
+            msgEl.innerHTML = '<span class="error-msg">Network error. Please try again.</span>';
+        }
+        btn.disabled = false;
+    }
+</script>
+</body>
+</html>

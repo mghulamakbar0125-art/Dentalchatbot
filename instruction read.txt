@@ -1,0 +1,36 @@
+Project Setup Instructions 
+Python Install Karo:
+Agar computer mein Python nahi hai, to python.org se download karke install kar lo. 
+(Install karte waqt "Add Python to PATH" waale box ko lazmi tick karna).
+
+
+Folder Kholein: Is project folder ko kholo.
+
+Terminal/CMD Kholein: 
+Folder ke address bar mein click karo, cmd likho aur Enter daba do.
+
+
+Libraries Install Karein: 
+Terminal mein ye command likho aur Enter dabao:
+
+
+Bash
+
+
+pip install -r requirements.txt
+
+(Isse project ki sari zaroori cheezein automatic install ho jayengi).
+
+
+Bot Chalayein: 
+Jab installation khatam ho jaye, to bot start karne ke liye ye command likho:
+
+
+Bash
+
+
+uvicorn main:app --reload
+
+Browser mein check karein: 
+Command chalne ke baad browser kholo aur ye URL typ karo: 
+http://127.0.0.1:8000/ask?question=hello

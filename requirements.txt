@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+gunicorn
+openai
+langchain-community
+python-dotenv
+beautifulsoup4
+lxml
+gspread
+google-auth
